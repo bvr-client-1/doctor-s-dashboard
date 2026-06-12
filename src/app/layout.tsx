@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hospital Appointment Dashboard",
-  description: "Manage hospital appointments",
+  title: "Hospital AI Reception Dashboard",
+  description: "AI-powered appointment management system",
 };
 
 export default function RootLayout({

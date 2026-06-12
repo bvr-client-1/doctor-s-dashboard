@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import { DashboardClient } from "./DashboardClient";
 
-type Appointment = {
+export type Appointment = {
   id: string;
   patient_name: string;
   phone: string;
@@ -9,7 +10,15 @@ type Appointment = {
   appointment_date: string;
   appointment_time: string;
   language: string;
+  status: string;
   created_at: string;
+};
+
+export type DashboardStats = {
+  total: number;
+  pending: number;
+  todayCalls: number;
+  departments: number;
 };
 
 async function getAppointments(): Promise<Appointment[]> {
@@ -18,83 +27,36 @@ async function getAppointments(): Promise<Appointment[]> {
     .select("*")
     .order("created_at", { ascending: false });
 
-  return data ?? [];
+  return (data ?? []).map((a) => ({ ...a, status: a.status ?? "Pending" }));
 }
+
+function computeStats(appointments: Appointment[]): DashboardStats {
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    total: appointments.length,
+    pending: appointments.filter((a) => a.status === "Pending").length,
+    todayCalls: appointments.filter((a) => a.appointment_date === today).length,
+    departments: new Set(appointments.map((a) => a.department)).size,
+  };
+}
+
+const DEMO_APPOINTMENTS: Appointment[] = [
+  { id: "demo-1", patient_name: "Pruthvi Raj", phone: "9876543210", reason: "Fever & Cough", department: "General Medicine", appointment_date: "2026-06-13", appointment_time: "10:00 AM", language: "Telugu", status: "Confirmed", created_at: "2026-06-13T05:30:00Z" },
+  { id: "demo-2", patient_name: "Rahul Sharma", phone: "9988776655", reason: "Eye Checkup", department: "Ophthalmology", appointment_date: "2026-06-14", appointment_time: "02:30 PM", language: "Hindi", status: "Pending", created_at: "2026-06-13T06:00:00Z" },
+  { id: "demo-3", patient_name: "Anjali Reddy", phone: "9123456780", reason: "Pregnancy Checkup", department: "Gynecology", appointment_date: "2026-06-14", appointment_time: "11:00 AM", language: "Telugu", status: "Confirmed", created_at: "2026-06-13T06:30:00Z" },
+  { id: "demo-4", patient_name: "Kiran Kumar", phone: "9008007001", reason: "Skin Rash", department: "Dermatology", appointment_date: "2026-06-13", appointment_time: "04:00 PM", language: "Kannada", status: "Cancelled", created_at: "2026-06-12T10:00:00Z" },
+  { id: "demo-5", patient_name: "Ayesha Khan", phone: "8899776655", reason: "Consultation", department: "Pediatrics", appointment_date: "2026-06-15", appointment_time: "09:00 AM", language: "Urdu", status: "Pending", created_at: "2026-06-13T07:00:00Z" },
+];
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const appointments = await getAppointments();
+  const isDemo = appointments.length === 0;
+  const displayAppointments = isDemo ? DEMO_APPOINTMENTS : appointments;
+  const stats = isDemo
+    ? { total: DEMO_APPOINTMENTS.length, pending: DEMO_APPOINTMENTS.filter((a) => a.status === "Pending").length, todayCalls: DEMO_APPOINTMENTS.filter((a) => a.appointment_date === new Date().toISOString().slice(0, 10)).length, departments: new Set(DEMO_APPOINTMENTS.map((a) => a.department)).size }
+    : computeStats(appointments);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Appointment Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage hospital appointments</p>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {appointments.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="text-4xl mb-4">📋</div>
-            <h2 className="text-lg font-semibold text-gray-900">No appointments yet</h2>
-            <p className="text-gray-500 mt-1">Appointments will appear here once created.</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {["Patient Name", "Phone", "Department", "Reason", "Date", "Time", "Language", "Created At"].map(
-                      (heading) => (
-                        <th
-                          key={heading}
-                          className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                        >
-                          {heading}
-                        </th>
-                      )
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {appointments.map((appt) => (
-                    <tr key={appt.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {appt.patient_name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{appt.phone}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{appt.department}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{appt.reason}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(appt.appointment_date).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{appt.appointment_time}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{appt.language}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        {new Date(appt.created_at).toLocaleString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
+  return <DashboardClient appointments={displayAppointments} stats={stats} isDemo={isDemo} />;
 }
