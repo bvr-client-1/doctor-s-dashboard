@@ -21,13 +21,32 @@ export type DashboardStats = {
   departments: number;
 };
 
-async function getAppointments(): Promise<Appointment[]> {
-  const { data } = await supabase
+type QueryResult =
+  | { ok: true; appointments: Appointment[] }
+  | { ok: false; error: string };
+
+async function queryAppointments(): Promise<QueryResult> {
+  console.log("[Dashboard] Fetching appointments from Supabase...");
+  console.log("[Dashboard] Supabase URL set:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("[Dashboard] Service key set:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  const { data, error } = await supabase
     .from("appointments")
     .select("*")
     .order("created_at", { ascending: false });
 
-  return (data ?? []).map((a) => ({ ...a, status: a.status ?? "Pending" }));
+  if (error) {
+    console.error("[Dashboard] Supabase query error:", error.message, error.details, error.hint);
+    return { ok: false, error: error.message };
+  }
+
+  const records = (data ?? []).map((a) => ({ ...a, status: a.status ?? "Pending" }));
+  console.log(`[Dashboard] Fetched ${records.length} record(s) from appointments table`);
+  if (records.length > 0) {
+    console.log("[Dashboard] First record:", JSON.stringify(records[0], null, 2));
+  }
+
+  return { ok: true, appointments: records };
 }
 
 function computeStats(appointments: Appointment[]): DashboardStats {
@@ -51,12 +70,45 @@ const DEMO_APPOINTMENTS: Appointment[] = [
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const appointments = await getAppointments();
-  const isDemo = appointments.length === 0;
-  const displayAppointments = isDemo ? DEMO_APPOINTMENTS : appointments;
+  const result = await queryAppointments();
+
+  let appointments: Appointment[];
+  let isDemo: boolean;
+  let queryError: string | null = null;
+
+  if (!result.ok) {
+    queryError = result.error;
+    console.warn("[Dashboard] Supabase query failed, falling back to demo data. Error:", result.error);
+    appointments = DEMO_APPOINTMENTS;
+    isDemo = true;
+  } else if (result.appointments.length === 0) {
+    console.log("[Dashboard] Database returned 0 records — showing demo placeholder data");
+    appointments = DEMO_APPOINTMENTS;
+    isDemo = true;
+  } else {
+    console.log(`[Dashboard] Database has ${result.appointments.length} record(s) — showing live data`);
+    appointments = result.appointments;
+    isDemo = false;
+  }
+
   const stats = isDemo
-    ? { total: DEMO_APPOINTMENTS.length, pending: DEMO_APPOINTMENTS.filter((a) => a.status === "Pending").length, todayCalls: DEMO_APPOINTMENTS.filter((a) => a.appointment_date === new Date().toISOString().slice(0, 10)).length, departments: new Set(DEMO_APPOINTMENTS.map((a) => a.department)).size }
+    ? {
+        total: DEMO_APPOINTMENTS.length,
+        pending: DEMO_APPOINTMENTS.filter((a) => a.status === "Pending").length,
+        todayCalls: DEMO_APPOINTMENTS.filter(
+          (a) => a.appointment_date === new Date().toISOString().slice(0, 10),
+        ).length,
+        departments: new Set(DEMO_APPOINTMENTS.map((a) => a.department)).size,
+      }
     : computeStats(appointments);
 
-  return <DashboardClient appointments={displayAppointments} stats={stats} isDemo={isDemo} />;
+  return (
+    <DashboardClient
+      appointments={appointments}
+      stats={stats}
+      isDemo={isDemo}
+      queryError={queryError}
+      recordsCount={!result.ok ? 0 : result.appointments.length}
+    />
+  );
 }

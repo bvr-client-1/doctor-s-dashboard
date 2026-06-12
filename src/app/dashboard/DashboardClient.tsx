@@ -7,6 +7,8 @@ type Props = {
   appointments: Appointment[];
   stats: DashboardStats;
   isDemo: boolean;
+  queryError: string | null;
+  recordsCount: number;
 };
 
 const DEPARTMENTS = [
@@ -67,34 +69,7 @@ function StatCard({ icon, value, label, sub }: { icon: string; value: number | s
   );
 }
 
-function TableSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead className="bg-gray-50/80">
-            <tr>
-              {["Patient Name", "Phone", "Department", "Reason", "Date", "Time", "Language", "Status", "Created At"].map((h) => (
-                <th key={h} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {[...Array(3)].map((_, i) => (
-              <tr key={i} className="animate-pulse">
-                {[...Array(9)].map((_, j) => (
-                  <td key={j} className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-24" /></td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-export function DashboardClient({ appointments, stats, isDemo }: Props) {
+export function DashboardClient({ appointments, stats, isDemo, queryError, recordsCount }: Props) {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All Departments");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -115,8 +90,6 @@ export function DashboardClient({ appointments, stats, isDemo }: Props) {
     const matchStatus = statusFilter === "All Status" || a.status === statusFilter;
     return matchSearch && matchDept && matchStatus;
   });
-
-  const totalAppointments = isDemo ? stats.total : appointments.length;
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -156,7 +129,23 @@ export function DashboardClient({ appointments, stats, isDemo }: Props) {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {isDemo && (
+        {queryError && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-red-800">Database connection error</p>
+                <p className="text-sm text-red-600 mt-0.5">{queryError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isDemo && !queryError && (
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-4 sm:p-5">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -166,7 +155,11 @@ export function DashboardClient({ appointments, stats, isDemo }: Props) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-blue-800">Demo Mode</p>
-                <p className="text-sm text-blue-600 mt-0.5">Showing sample appointments. Real data from AI voice calls will appear automatically.</p>
+                <p className="text-sm text-blue-600 mt-0.5">
+                  {recordsCount === 0
+                    ? "No appointments in database yet. Showing sample data below. Real records will appear automatically once created."
+                    : "Showing sample appointments for preview. Real data from AI voice calls will appear automatically."}
+                </p>
               </div>
             </div>
           </div>
@@ -293,7 +286,7 @@ export function DashboardClient({ appointments, stats, isDemo }: Props) {
           )}
         </div>
 
-        {isDemo && (
+        {isDemo && !queryError && (
           <div className="bg-gradient-to-br from-healthcare-600 to-healthcare-800 rounded-2xl p-6 sm:p-8 text-white shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
