@@ -4,10 +4,7 @@ import { useState, useEffect } from "react";
 import { StatCards } from "@/components/appointment/StatCards";
 import { AppointmentTable } from "@/components/appointment/AppointmentTable";
 import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  RefreshCw,
-} from "lucide-react";
+import { Calendar, RefreshCw } from "lucide-react";
 
 interface Stats {
   total: number;
@@ -23,19 +20,6 @@ interface Stats {
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/stats");
-      const data = await res.json();
-      setStats(data);
-    } catch (err) {
-      console.error("Failed to fetch stats:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const load = async () => {
@@ -60,17 +44,36 @@ export default function DashboardPage() {
     year: "numeric",
   });
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/stats");
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                  AI System Active
+                </span>
+              </div>
               <h1 className="text-2xl font-bold tracking-tight">
-                Hospital AI Reception Dashboard
+                Apollo Care Dashboard
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                AI-powered appointment management system
+                AI Appointment Management System
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -78,7 +81,7 @@ export default function DashboardPage() {
                 <Calendar className="h-4 w-4" />
                 {today}
               </div>
-              <Button variant="outline" size="sm" onClick={fetchStats}>
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
               </Button>
@@ -89,7 +92,9 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading stats...</div>
+          <div className="text-center py-8 text-muted-foreground">
+            Loading stats...
+          </div>
         ) : stats ? (
           <StatCards
             total={stats.total}
@@ -98,6 +103,7 @@ export default function DashboardPage() {
             confirmed={stats.confirmed}
             completed={stats.completed}
             cancelled={stats.cancelled}
+            departments={Object.keys(stats.by_department).length}
           />
         ) : null}
 

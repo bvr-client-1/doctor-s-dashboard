@@ -2,12 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Calendar,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  TrendingUp,
-  AlertCircle,
+  Users,
+  CalendarCheck,
+  Phone,
+  Building2,
 } from "lucide-react";
 
 interface StatCardsProps {
@@ -17,50 +15,37 @@ interface StatCardsProps {
   confirmed: number;
   completed: number;
   cancelled: number;
+  departments?: number;
 }
 
 const cards = [
   {
-    key: "total",
-    label: "Total Appointments",
-    icon: Calendar,
+    key: "today",
+    label: "Today's Patients",
+    icon: Users,
     color: "text-blue-600",
-    bg: "bg-blue-50",
+    bg: "bg-blue-50 dark:bg-blue-950",
   },
   {
-    key: "today",
-    label: "Today's Appointments",
-    icon: Clock,
+    key: "total",
+    label: "Appointments Booked",
+    icon: CalendarCheck,
     color: "text-purple-600",
-    bg: "bg-purple-50",
+    bg: "bg-purple-50 dark:bg-purple-950",
   },
   {
     key: "pending",
-    label: "Pending",
-    icon: AlertCircle,
+    label: "AI Calls Handled",
+    icon: Phone,
     color: "text-amber-600",
-    bg: "bg-amber-50",
+    bg: "bg-amber-50 dark:bg-amber-950",
   },
   {
-    key: "completed",
-    label: "Completed",
-    icon: CheckCircle2,
-    color: "text-green-600",
-    bg: "bg-green-50",
-  },
-  {
-    key: "confirmed",
-    label: "Confirmed",
-    icon: TrendingUp,
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
-  },
-  {
-    key: "cancelled",
-    label: "Cancelled",
-    icon: XCircle,
-    color: "text-red-600",
-    bg: "bg-red-50",
+    key: "departments",
+    label: "Departments Active",
+    icon: Building2,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50 dark:bg-emerald-950",
   },
 ];
 
@@ -71,6 +56,7 @@ export function StatCards({
   confirmed,
   completed,
   cancelled,
+  departments = 0,
 }: StatCardsProps) {
   const values: Record<string, number> = {
     total,
@@ -79,10 +65,11 @@ export function StatCards({
     confirmed,
     completed,
     cancelled,
+    departments,
   };
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
         <Card key={card.key} className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

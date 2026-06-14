@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
 import { StatusBadge } from "./StatusBadge";
 import { formatDate } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
+import { getDoctorName } from "@/lib/doctors";
 import {
   Search,
   Eye,
@@ -30,12 +32,12 @@ import {
   ChevronRight,
   X,
   Calendar,
-  Clock,
-  Building2,
-  Phone,
-  Globe,
   FileText,
   User,
+  Activity,
+  Mic,
+  Bot,
+  Stethoscope,
 } from "lucide-react";
 import {
   Dialog,
@@ -90,6 +92,22 @@ const STATUSES = [
   "completed",
   "cancelled",
 ];
+
+function SourceBadge({ source }: { source: string }) {
+  if (source === "AI Voice Agent") {
+    return (
+      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
+        <Mic className="h-3 w-3 mr-1" />
+        AI Voice Agent
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700">
+      {source}
+    </Badge>
+  );
+}
 
 export function AppointmentTable() {
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -284,21 +302,22 @@ export function AppointmentTable() {
               <TableHead>Date</TableHead>
               <TableHead>Time</TableHead>
               <TableHead>Language</TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Doctor</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8">
+                <TableCell colSpan={11} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : !data?.appointments.length ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8">
+                <TableCell colSpan={11} className="text-center py-8">
                   No appointments found.
                 </TableCell>
               </TableRow>
@@ -328,10 +347,18 @@ export function AppointmentTable() {
                   <TableCell>{appt.appointment_time || "—"}</TableCell>
                   <TableCell>{appt.language}</TableCell>
                   <TableCell>
-                    <StatusBadge status={appt.status} />
+                    <SourceBadge source={appt.source || "AI Voice Agent"} />
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(appt.created_at)}
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm">
+                        {getDoctorName(appt.department)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={appt.status} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -398,54 +425,76 @@ export function AppointmentTable() {
         </div>
       )}
 
-      {/* View Modal */}
+      {/* View Modal - Appointment Details */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Appointment Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-blue-600" />
+              Appointment Details
+            </DialogTitle>
             <DialogDescription>
-              View appointment information for {selectedAppointment?.patient_name}
+              Complete information for {selectedAppointment?.patient_name}
             </DialogDescription>
           </DialogHeader>
           {selectedAppointment && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* AI Summary */}
               {selectedAppointment.summary && (
-                <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
-                  <p className="text-sm font-medium text-blue-800 mb-1">AI Summary</p>
-                  <p className="text-sm text-blue-700">{selectedAppointment.summary}</p>
+                <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 dark:from-blue-950/50 dark:to-indigo-950/50 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bot className="h-4 w-4 text-blue-600" />
+                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                      AI Summary
+                    </p>
+                  </div>
+                  <p className="text-sm text-blue-700 dark:text-blue-400 leading-relaxed">
+                    {selectedAppointment.summary}
+                  </p>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
+
+              {/* Patient Information */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Patient Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-muted/50">
                   <div>
-                    <p className="text-xs text-muted-foreground">Patient Name</p>
+                    <p className="text-xs text-muted-foreground">Name</p>
                     <p className="font-medium">{selectedAppointment.patient_name}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Phone</p>
-                    <p className="font-medium">{selectedAppointment.phone}</p>
+                    <p className="font-medium font-mono">{selectedAppointment.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Language</p>
+                    <p className="font-medium">{selectedAppointment.language}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <StatusBadge status={selectedAppointment.status} />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
+              </div>
+
+              {/* Appointment Information */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Appointment Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-muted/50">
                   <div>
                     <p className="text-xs text-muted-foreground">Department</p>
                     <p className="font-medium">{selectedAppointment.department}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Reason</p>
                     <p className="font-medium">{selectedAppointment.reason || "—"}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Date</p>
                     <p className="font-medium">
@@ -454,40 +503,73 @@ export function AppointmentTable() {
                         : "—"}
                     </p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Time</p>
-                    <p className="font-medium">
-                      {selectedAppointment.appointment_time || "—"}
-                    </p>
+                    <p className="font-medium">{selectedAppointment.appointment_time || "—"}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Language</p>
-                    <p className="font-medium">{selectedAppointment.language}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <StatusBadge status={selectedAppointment.status} />
                 </div>
               </div>
+
+              {/* Assigned Doctor */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4" />
+                  Assigned Doctor
+                </h3>
+                <div className="p-4 rounded-xl bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                      {getDoctorName(selectedAppointment.department)
+                        .replace("Dr ", "")
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </div>
+                    <div>
+                      <p className="font-medium">
+                        {getDoctorName(selectedAppointment.department)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAppointment.department}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Call Source */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                  <Mic className="h-4 w-4" />
+                  Booking Source
+                </h3>
+                <div className="p-4 rounded-xl bg-muted/50">
+                  <SourceBadge source={selectedAppointment.source || "AI Voice Agent"} />
+                  {selectedAppointment.call_duration && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Call Duration: {selectedAppointment.call_duration}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Notes */}
               {selectedAppointment.notes && (
-                <div className="p-4 rounded-lg bg-gray-50">
-                  <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                  <p className="text-sm">{selectedAppointment.notes}</p>
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Notes
+                  </h3>
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <p className="text-sm">{selectedAppointment.notes}</p>
+                  </div>
                 </div>
               )}
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>Source: {selectedAppointment.source}</span>
+
+              {/* Metadata */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
+                <span>ID: {selectedAppointment.id.slice(0, 8)}...</span>
                 <span>Created: {formatDate(selectedAppointment.created_at)}</span>
-                {selectedAppointment.call_duration && (
-                  <span>Duration: {selectedAppointment.call_duration}</span>
-                )}
               </div>
             </div>
           )}
