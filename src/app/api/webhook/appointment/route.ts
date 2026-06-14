@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { webhookAppointmentSchema } from "@/lib/validations";
 import { generateSummaryFromFields } from "@/lib/ai-summary";
+import { webhookAppointmentSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         missingFields.push(field);
       }
     }
-    console.warn(`[Webhook:${requestId}] Validation failed:`, missingFields.join(", "));
+    console.error(`[Webhook:${requestId}] Validation failed:`, JSON.stringify(fieldErrors));
     return NextResponse.json(
       {
         success: false,
@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+
+  console.log(`[Webhook:${requestId}] Validation passed`);
 
   const data = validation.data;
 
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
     reason: data.reason || null,
     appointment_date: data.appointment_date || null,
     appointment_time: data.appointment_time || null,
-    language: data.language,
+    language: data.language || null,
     status: "pending",
     source: "AI Voice Agent",
     call_duration: data.call_duration || null,
@@ -73,14 +75,14 @@ export async function POST(request: NextRequest) {
     patient_name: data.patient_name,
     phone: normalizedPhone,
     department: data.department,
-    reason: data.reason || null,
-    appointment_date: data.appointment_date || null,
-    appointment_time: data.appointment_time || null,
-    language: data.language,
+    reason: data.reason || undefined,
+    appointment_date: data.appointment_date || undefined,
+    appointment_time: data.appointment_time || undefined,
+    language: data.language || undefined,
     status: "pending",
     source: "AI Voice Agent",
-    call_duration: data.call_duration || null,
-    notes: data.notes || null,
+    call_duration: data.call_duration || undefined,
+    notes: data.notes || undefined,
   });
   insertPayload.summary = summary;
 
@@ -104,13 +106,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log(`[Webhook:${requestId}] Created: ${result.id}`);
+  console.log(`[Webhook:${requestId}] Appointment inserted: ${result.id}`);
   return NextResponse.json(
     {
       success: true,
       appointment_id: result.id,
       request_id: requestId,
     },
-    { status: 201 }
+    { status: 200 }
   );
 }
