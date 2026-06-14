@@ -1,12 +1,7 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Users,
-  CalendarCheck,
-  Phone,
-  Building2,
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, CalendarCheck, Phone, Building2 } from "lucide-react";
 
 interface StatCardsProps {
   total: number;
@@ -24,28 +19,32 @@ const cards = [
     label: "Today's Patients",
     icon: Users,
     color: "text-blue-600",
-    bg: "bg-blue-50 dark:bg-blue-950",
+    bg: "bg-blue-50",
+    border: "border-blue-100",
   },
   {
     key: "total",
     label: "Appointments Booked",
     icon: CalendarCheck,
-    color: "text-purple-600",
-    bg: "bg-purple-50 dark:bg-purple-950",
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+    border: "border-indigo-100",
   },
   {
     key: "pending",
     label: "AI Calls Handled",
     icon: Phone,
     color: "text-amber-600",
-    bg: "bg-amber-50 dark:bg-amber-950",
+    bg: "bg-amber-50",
+    border: "border-amber-100",
   },
   {
     key: "departments",
     label: "Departments Active",
     icon: Building2,
     color: "text-emerald-600",
-    bg: "bg-emerald-50 dark:bg-emerald-950",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
   },
 ];
 
@@ -71,17 +70,24 @@ export function StatCards({
   return (
     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.key} className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {card.label}
-            </CardTitle>
-            <div className={`p-2 rounded-lg ${card.bg}`}>
-              <card.icon className={`h-4 w-4 ${card.color}`} />
+        <Card
+          key={card.key}
+          className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-slate-100"
+        >
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">
+                  {card.label}
+                </p>
+                <p className="text-3xl font-bold text-slate-900 mt-1">
+                  {values[card.key]}
+                </p>
+              </div>
+              <div className={`p-3 rounded-xl ${card.bg} border ${card.border}`}>
+                <card.icon className={`h-5 w-5 ${card.color}`} />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{values[card.key]}</div>
           </CardContent>
         </Card>
       ))}

@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -96,16 +95,24 @@ const STATUSES = [
 function SourceBadge({ source }: { source: string }) {
   if (source === "AI Voice Agent") {
     return (
-      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
-        <Mic className="h-3 w-3 mr-1" />
-        AI Voice Agent
-      </Badge>
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+        <Mic className="h-3 w-3" />
+        AI
+      </span>
     );
   }
   return (
-    <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
       {source}
-    </Badge>
+    </span>
+  );
+}
+
+function DepartmentBadge({ department }: { department: string }) {
+  return (
+    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+      {department}
+    </span>
   );
 }
 
@@ -234,7 +241,7 @@ export function AppointmentTable() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Search by name or phone..."
             value={search}
@@ -242,7 +249,7 @@ export function AppointmentTable() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="pl-9"
+            className="pl-9 border-slate-200"
           />
         </div>
         <Select
@@ -252,7 +259,7 @@ export function AppointmentTable() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] border-slate-200">
             <SelectValue placeholder="Department" />
           </SelectTrigger>
           <SelectContent>
@@ -270,7 +277,7 @@ export function AppointmentTable() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-full sm:w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px] border-slate-200">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -284,75 +291,77 @@ export function AppointmentTable() {
           </SelectContent>
         </Select>
         {hasFilters && (
-          <Button variant="ghost" onClick={clearFilters} className="gap-2">
+          <Button variant="ghost" onClick={clearFilters} className="gap-2 text-slate-600">
             <X className="h-4 w-4" />
             Clear
           </Button>
         )}
       </div>
 
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Patient</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Language</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Doctor</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-slate-50">
+              <TableHead className="font-semibold text-slate-700">Patient</TableHead>
+              <TableHead className="font-semibold text-slate-700">Phone</TableHead>
+              <TableHead className="font-semibold text-slate-700">Department</TableHead>
+              <TableHead className="font-semibold text-slate-700">Reason</TableHead>
+              <TableHead className="font-semibold text-slate-700">Date</TableHead>
+              <TableHead className="font-semibold text-slate-700">Time</TableHead>
+              <TableHead className="font-semibold text-slate-700">Language</TableHead>
+              <TableHead className="font-semibold text-slate-700">Source</TableHead>
+              <TableHead className="font-semibold text-slate-700">Doctor</TableHead>
+              <TableHead className="font-semibold text-slate-700">Status</TableHead>
+              <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8">
+                <TableCell colSpan={11} className="text-center py-12 text-slate-500">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : !data?.appointments.length ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8">
+                <TableCell colSpan={11} className="text-center py-12 text-slate-500">
                   No appointments found.
                 </TableCell>
               </TableRow>
             ) : (
               data.appointments.map((appt) => (
-                <TableRow key={appt.id}>
+                <TableRow key={appt.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
                         {getInitials(appt.patient_name)}
                       </div>
-                      <span className="font-medium">{appt.patient_name}</span>
+                      <span className="font-semibold text-slate-900">{appt.patient_name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono text-sm text-slate-500">
                     {appt.phone}
                   </TableCell>
-                  <TableCell>{appt.department}</TableCell>
-                  <TableCell className="max-w-[150px] truncate">
+                  <TableCell>
+                    <DepartmentBadge department={appt.department} />
+                  </TableCell>
+                  <TableCell className="max-w-[150px] truncate text-slate-600">
                     {appt.reason || "—"}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-slate-700">
                     {appt.appointment_date
                       ? formatDate(appt.appointment_date)
                       : "—"}
                   </TableCell>
-                  <TableCell>{appt.appointment_time || "—"}</TableCell>
-                  <TableCell>{appt.language}</TableCell>
+                  <TableCell className="text-slate-700">{appt.appointment_time || "—"}</TableCell>
+                  <TableCell className="text-slate-600">{appt.language}</TableCell>
                   <TableCell>
                     <SourceBadge source={appt.source || "AI Voice Agent"} />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
-                      <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm">
+                      <Stethoscope className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-sm font-semibold text-slate-700">
                         {getDoctorName(appt.department)}
                       </span>
                     </div>
@@ -366,7 +375,7 @@ export function AppointmentTable() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleView(appt)}
-                        className="h-8 w-8"
+                        className="h-8 w-8 text-slate-500 hover:text-blue-600"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -374,7 +383,7 @@ export function AppointmentTable() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(appt)}
-                        className="h-8 w-8"
+                        className="h-8 w-8 text-slate-500 hover:text-blue-600"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -382,7 +391,7 @@ export function AppointmentTable() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteClick(appt)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-8 w-8 text-slate-500 hover:text-red-600"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -397,7 +406,7 @@ export function AppointmentTable() {
 
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-slate-500">
             Showing {(data.page - 1) * data.limit + 1}–
             {Math.min(data.page * data.limit, data.total)} of {data.total}
           </p>
@@ -407,10 +416,11 @@ export function AppointmentTable() {
               size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
+              className="border-slate-200"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium">
+            <span className="text-sm font-semibold text-slate-700">
               {page} / {data.totalPages}
             </span>
             <Button
@@ -418,6 +428,7 @@ export function AppointmentTable() {
               size="sm"
               onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
               disabled={page === data.totalPages}
+              className="border-slate-200"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -429,7 +440,7 @@ export function AppointmentTable() {
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
               <Activity className="h-5 w-5 text-blue-600" />
               Appointment Details
             </DialogTitle>
@@ -439,86 +450,80 @@ export function AppointmentTable() {
           </DialogHeader>
           {selectedAppointment && (
             <div className="space-y-6">
-              {/* AI Summary */}
               {selectedAppointment.summary && (
-                <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 dark:from-blue-950/50 dark:to-indigo-950/50 dark:border-blue-800">
+                <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
                   <div className="flex items-center gap-2 mb-2">
                     <Bot className="h-4 w-4 text-blue-600" />
-                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
-                      AI Summary
-                    </p>
+                    <p className="text-sm font-semibold text-blue-800">AI Summary</p>
                   </div>
-                  <p className="text-sm text-blue-700 dark:text-blue-400 leading-relaxed">
+                  <p className="text-sm text-blue-700 leading-relaxed">
                     {selectedAppointment.summary}
                   </p>
                 </div>
               )}
 
-              {/* Patient Information */}
               <div>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                   <User className="h-4 w-4" />
                   Patient Information
                 </h3>
-                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-muted/50">
+                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
                   <div>
-                    <p className="text-xs text-muted-foreground">Name</p>
-                    <p className="font-medium">{selectedAppointment.patient_name}</p>
+                    <p className="text-xs font-medium text-slate-500">Name</p>
+                    <p className="font-semibold text-slate-900">{selectedAppointment.patient_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Phone</p>
-                    <p className="font-medium font-mono">{selectedAppointment.phone}</p>
+                    <p className="text-xs font-medium text-slate-500">Phone</p>
+                    <p className="font-semibold text-slate-900 font-mono">{selectedAppointment.phone}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Language</p>
-                    <p className="font-medium">{selectedAppointment.language}</p>
+                    <p className="text-xs font-medium text-slate-500">Language</p>
+                    <p className="font-semibold text-slate-900">{selectedAppointment.language}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Status</p>
+                    <p className="text-xs font-medium text-slate-500">Status</p>
                     <StatusBadge status={selectedAppointment.status} />
                   </div>
                 </div>
               </div>
 
-              {/* Appointment Information */}
               <div>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Appointment Information
                 </h3>
-                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-muted/50">
+                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
                   <div>
-                    <p className="text-xs text-muted-foreground">Department</p>
-                    <p className="font-medium">{selectedAppointment.department}</p>
+                    <p className="text-xs font-medium text-slate-500">Department</p>
+                    <p className="font-semibold text-slate-900">{selectedAppointment.department}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Reason</p>
-                    <p className="font-medium">{selectedAppointment.reason || "—"}</p>
+                    <p className="text-xs font-medium text-slate-500">Reason</p>
+                    <p className="font-semibold text-slate-900">{selectedAppointment.reason || "—"}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Date</p>
-                    <p className="font-medium">
+                    <p className="text-xs font-medium text-slate-500">Date</p>
+                    <p className="font-semibold text-slate-900">
                       {selectedAppointment.appointment_date
                         ? formatDate(selectedAppointment.appointment_date)
                         : "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Time</p>
-                    <p className="font-medium">{selectedAppointment.appointment_time || "—"}</p>
+                    <p className="text-xs font-medium text-slate-500">Time</p>
+                    <p className="font-semibold text-slate-900">{selectedAppointment.appointment_time || "—"}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Assigned Doctor */}
               <div>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                   <Stethoscope className="h-4 w-4" />
                   Assigned Doctor
                 </h3>
-                <div className="p-4 rounded-xl bg-muted/50">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
                       {getDoctorName(selectedAppointment.department)
                         .replace("Dr ", "")
                         .split(" ")
@@ -526,10 +531,10 @@ export function AppointmentTable() {
                         .join("")}
                     </div>
                     <div>
-                      <p className="font-medium">
+                      <p className="font-semibold text-slate-900">
                         {getDoctorName(selectedAppointment.department)}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-slate-500">
                         {selectedAppointment.department}
                       </p>
                     </div>
@@ -537,37 +542,34 @@ export function AppointmentTable() {
                 </div>
               </div>
 
-              {/* Call Source */}
               <div>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                   <Mic className="h-4 w-4" />
                   Booking Source
                 </h3>
-                <div className="p-4 rounded-xl bg-muted/50">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                   <SourceBadge source={selectedAppointment.source || "AI Voice Agent"} />
                   {selectedAppointment.call_duration && (
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-sm text-slate-500 mt-2">
                       Call Duration: {selectedAppointment.call_duration}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Notes */}
               {selectedAppointment.notes && (
                 <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     Notes
                   </h3>
-                  <div className="p-4 rounded-xl bg-muted/50">
-                    <p className="text-sm">{selectedAppointment.notes}</p>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-sm text-slate-700">{selectedAppointment.notes}</p>
                   </div>
                 </div>
               )}
 
-              {/* Metadata */}
-              <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
+              <div className="flex items-center gap-4 text-xs text-slate-400 pt-2 border-t border-slate-100">
                 <span>ID: {selectedAppointment.id.slice(0, 8)}...</span>
                 <span>Created: {formatDate(selectedAppointment.created_at)}</span>
               </div>
@@ -580,7 +582,7 @@ export function AppointmentTable() {
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Appointment</DialogTitle>
+            <DialogTitle className="text-slate-900">Edit Appointment</DialogTitle>
             <DialogDescription>
               Update appointment information for {selectedAppointment?.patient_name}
             </DialogDescription>
@@ -588,32 +590,34 @@ export function AppointmentTable() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Patient Name</label>
+                <label className="text-sm font-semibold text-slate-700">Patient Name</label>
                 <Input
                   value={editForm.patient_name || ""}
                   onChange={(e) =>
                     setEditForm({ ...editForm, patient_name: e.target.value })
                   }
+                  className="border-slate-200"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Phone</label>
+                <label className="text-sm font-semibold text-slate-700">Phone</label>
                 <Input
                   value={editForm.phone || ""}
                   onChange={(e) =>
                     setEditForm({ ...editForm, phone: e.target.value })
                   }
+                  className="border-slate-200"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Department</label>
+                <label className="text-sm font-semibold text-slate-700">Department</label>
                 <Select
                   value={editForm.department || ""}
                   onValueChange={(val) =>
                     setEditForm({ ...editForm, department: val })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-slate-200">
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
@@ -626,14 +630,14 @@ export function AppointmentTable() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Status</label>
+                <label className="text-sm font-semibold text-slate-700">Status</label>
                 <Select
                   value={editForm.status || ""}
                   onValueChange={(val) =>
                     setEditForm({ ...editForm, status: val as Appointment["status"] })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-slate-200">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -646,17 +650,18 @@ export function AppointmentTable() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Date</label>
+                <label className="text-sm font-semibold text-slate-700">Date</label>
                 <Input
                   type="date"
                   value={editForm.appointment_date || ""}
                   onChange={(e) =>
                     setEditForm({ ...editForm, appointment_date: e.target.value })
                   }
+                  className="border-slate-200"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Time</label>
+                <label className="text-sm font-semibold text-slate-700">Time</label>
                 <Input
                   type="text"
                   placeholder="e.g. 10:30 AM"
@@ -664,29 +669,32 @@ export function AppointmentTable() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, appointment_time: e.target.value })
                   }
+                  className="border-slate-200"
                 />
               </div>
               <div className="col-span-2">
-                <label className="text-sm font-medium">Reason</label>
+                <label className="text-sm font-semibold text-slate-700">Reason</label>
                 <Input
                   value={editForm.reason || ""}
                   onChange={(e) =>
                     setEditForm({ ...editForm, reason: e.target.value })
                   }
+                  className="border-slate-200"
                 />
               </div>
               <div className="col-span-2">
-                <label className="text-sm font-medium">Notes</label>
+                <label className="text-sm font-semibold text-slate-700">Notes</label>
                 <Input
                   value={editForm.notes || ""}
                   onChange={(e) =>
                     setEditForm({ ...editForm, notes: e.target.value })
                   }
+                  className="border-slate-200"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              <Button variant="outline" onClick={() => setEditModalOpen(false)} className="border-slate-200">
                 Cancel
               </Button>
               <Button onClick={handleEditSave} disabled={editLoading}>
@@ -701,14 +709,14 @@ export function AppointmentTable() {
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Appointment</DialogTitle>
+            <DialogTitle className="text-slate-900">Delete Appointment</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete the appointment for{" "}
               <strong>{selectedAppointment?.patient_name}</strong>? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} className="border-slate-200">
               Cancel
             </Button>
             <Button

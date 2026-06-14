@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Apollo Care Hospitals — AI Appointment Management",
-  description: "AI-powered appointment management system for Apollo Care Hospitals",
+  title: "CarePoint Medical Center — AI Reception & Appointment Management",
+  description: "AI Reception & Appointment Management for CarePoint Medical Center",
 };
 
 export default function RootLayout({
@@ -20,49 +20,49 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <nav className="border-b bg-card sticky top-0 z-50">
+        <nav className="border-b bg-white sticky top-0 z-50 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-8">
                 <a href="/dashboard" className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
-                    <span className="text-white text-sm font-bold">AC</span>
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
+                    <span className="text-white text-sm font-bold">CP</span>
                   </div>
                   <div className="hidden sm:block">
-                    <p className="font-semibold text-sm leading-tight">
-                      Apollo Care
+                    <p className="font-semibold text-sm leading-tight text-foreground">
+                      CarePoint
                     </p>
-                    <p className="text-[10px] text-muted-foreground leading-tight">
-                      Hospitals
+                    <p className="text-[10px] text-slate-500 leading-tight font-medium">
+                      Medical Center
                     </p>
                   </div>
                 </a>
                 <div className="flex items-center gap-1">
                   <a
                     href="/dashboard"
-                    className="px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="px-3 py-2 text-sm font-semibold rounded-md hover:bg-slate-100 text-slate-700 hover:text-foreground transition-colors"
                   >
                     Dashboard
                   </a>
                   <a
                     href="/doctors"
-                    className="px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="px-3 py-2 text-sm font-semibold rounded-md hover:bg-slate-100 text-slate-700 hover:text-foreground transition-colors"
                   >
                     Doctors
                   </a>
                   <a
                     href="/analytics"
-                    className="px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="px-3 py-2 text-sm font-semibold rounded-md hover:bg-slate-100 text-slate-700 hover:text-foreground transition-colors"
                   >
                     Analytics
                   </a>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-full px-3 py-1.5">
+                <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
                   AI System Active
                 </div>
