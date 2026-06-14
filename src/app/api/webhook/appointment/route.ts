@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { webhookAppointmentSchema } from "@/lib/validations";
-import { sendAppointmentSMS } from "@/lib/twilio";
+import { sendAppointmentWhatsApp } from "@/lib/whatsapp";
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -90,14 +90,14 @@ export async function POST(request: NextRequest) {
 
   console.log(`[Webhook:${requestId}] Appointment inserted: ${result.id}`);
 
-  sendAppointmentSMS({
+  sendAppointmentWhatsApp({
     to: normalizedPhone,
     patient_name: data.patient_name.trim(),
     department: data.department,
     appointment_date: data.appointment_date || null,
     appointment_time: data.appointment_time || null,
   }).catch((err) => {
-    console.error(`[Webhook:${requestId}] SMS fire-and-forget error:`, err);
+    console.error(`[Webhook:${requestId}] WhatsApp fire-and-forget error:`, err);
   });
 
   return NextResponse.json(
