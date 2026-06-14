@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { generateSummaryFromFields } from "@/lib/ai-summary";
 import { webhookAppointmentSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
@@ -65,26 +64,8 @@ export async function POST(request: NextRequest) {
     appointment_date: data.appointment_date || null,
     appointment_time: data.appointment_time || null,
     language: data.language || null,
-    status: "pending",
-    source: "AI Voice Agent",
-    call_duration: data.call_duration || null,
     notes: data.notes || null,
   };
-
-  const summary = generateSummaryFromFields({
-    patient_name: data.patient_name,
-    phone: normalizedPhone,
-    department: data.department,
-    reason: data.reason || undefined,
-    appointment_date: data.appointment_date || undefined,
-    appointment_time: data.appointment_time || undefined,
-    language: data.language || undefined,
-    status: "pending",
-    source: "AI Voice Agent",
-    call_duration: data.call_duration || undefined,
-    notes: data.notes || undefined,
-  });
-  insertPayload.summary = summary;
 
   console.log(`[Webhook:${requestId}] Inserting into Supabase...`);
 
