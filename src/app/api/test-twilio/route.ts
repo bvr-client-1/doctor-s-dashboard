@@ -19,14 +19,19 @@ export async function GET() {
   try {
     console.log("[TestTwilio] Creating client...");
     const client = twilio(accountSid, authToken);
-    console.log("[TestTwilio] Client created. Sending SMS...");
+    console.log("[TestTwilio] Client created. Sending SMS with 10s timeout...");
 
     const startTime = Date.now();
-    const message = await client.messages.create({
-      body: "Twilio test message",
-      from: fromNumber,
-      to: "+917989628066",
-    });
+    const message = await Promise.race([
+      client.messages.create({
+        body: "Twilio test message",
+        from: fromNumber,
+        to: "+917989628066",
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Twilio timeout: messages.create() exceeded 10s")), 10000)
+      ),
+    ]);
     const elapsed = Date.now() - startTime;
 
     console.log(`[TestTwilio] SMS sent in ${elapsed}ms`);

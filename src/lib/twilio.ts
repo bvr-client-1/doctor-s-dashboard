@@ -47,13 +47,18 @@ export async function sendAppointmentSMS(options: SendSMSOptions): Promise<boole
   try {
     console.log(`[Twilio] Creating client... (SID: ${sidPreview}..., From: ${fromNumber}, To: ${to})`);
     const client = getClient();
-    console.log(`[Twilio] Client created. Calling messages.create()...`);
+    console.log(`[Twilio] Client created. Calling messages.create() with 10s timeout...`);
     const startTime = Date.now();
-    const message = await client.messages.create({
-      body,
-      from: fromNumber,
-      to,
-    });
+    const message = await Promise.race([
+      client.messages.create({
+        body,
+        from: fromNumber,
+        to,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Twilio timeout: messages.create() exceeded 10s")), 10000)
+      ),
+    ]);
     const elapsed = Date.now() - startTime;
     console.log(`[Twilio] messages.create() completed in ${elapsed}ms. SID: ${message.sid}`);
     console.log(`[Twilio] SMS sent successfully to ${to}`);
