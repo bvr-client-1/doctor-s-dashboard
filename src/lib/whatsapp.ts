@@ -120,7 +120,7 @@ export async function testWhatsAppSend(): Promise<{
   }
 
   const url = `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`;
-  const testBody = "Twilio test message";
+  const testBody = "WhatsApp test message from CarePoint Medical Center";
 
   console.log("[WhatsAppTest] Sending test message...");
   console.log(`[WhatsAppTest] URL: ${url}`);
