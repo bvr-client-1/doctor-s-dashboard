@@ -42,18 +42,37 @@ export async function sendAppointmentSMS(options: SendSMSOptions): Promise<boole
     "Thank you.",
   ].join("\n");
 
+  const sidPreview = accountSid ? accountSid.slice(0, 8) : "N/A";
+
   try {
+    console.log(`[Twilio] Creating client... (SID: ${sidPreview}..., From: ${fromNumber}, To: ${to})`);
     const client = getClient();
-    await client.messages.create({
+    console.log(`[Twilio] Client created. Calling messages.create()...`);
+    const startTime = Date.now();
+    const message = await client.messages.create({
       body,
       from: fromNumber,
       to,
     });
+    const elapsed = Date.now() - startTime;
+    console.log(`[Twilio] messages.create() completed in ${elapsed}ms. SID: ${message.sid}`);
     console.log(`[Twilio] SMS sent successfully to ${to}`);
     return true;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error(`[Twilio] SMS failed to ${to}:`, message);
+    if (error instanceof Error) {
+      console.error(`[Twilio] SMS failed to ${to}:`);
+      console.error(`[Twilio] Error name: ${error.name}`);
+      console.error(`[Twilio] Error message: ${error.message}`);
+      console.error(`[Twilio] Error stack:\n${error.stack}`);
+      if ("code" in error) {
+        console.error(`[Twilio] Error code: ${(error as Record<string, unknown>).code}`);
+      }
+      if ("status" in error) {
+        console.error(`[Twilio] HTTP status: ${(error as Record<string, unknown>).status}`);
+      }
+    } else {
+      console.error(`[Twilio] SMS failed to ${to}: Unknown error`, error);
+    }
     return false;
   }
 }
