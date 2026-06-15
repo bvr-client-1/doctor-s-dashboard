@@ -130,7 +130,8 @@ export async function POST(request: NextRequest) {
   console.log(`[Webhook:${requestId}] Normalized appointment_time: ${normalizedTimeResult.value}`);
   console.log(`[Webhook:${requestId}] Generated appointment_id: ${appointmentId}`);
 
-  console.log(`[Webhook:${requestId}] Calling AI normalization...`);
+  console.log(`[Webhook:${requestId}] Starting AI normalization...`);
+  const aiStartTime = Date.now();
   const aiResult = await normalizeWithAI({
     patient_name: data.patient_name.trim(),
     phone: normalizedPhone,
@@ -141,7 +142,10 @@ export async function POST(request: NextRequest) {
     language: data.language || null,
     notes: data.notes || null,
   });
-  console.log(`[Webhook:${requestId}] AI normalized:`, JSON.stringify(aiResult));
+  const aiElapsed = Date.now() - aiStartTime;
+  console.log(`[Webhook:${requestId}] AI normalization completed in ${aiElapsed}ms`);
+  console.log(`[Webhook:${requestId}] Before AI: name="${data.patient_name.trim()}", dept="${data.department}", reason="${data.reason || ""}", lang="${data.language || ""}"`);
+  console.log(`[Webhook:${requestId}] After AI:  name="${aiResult.patient_name}", dept="${aiResult.department}", reason="${aiResult.reason || ""}", lang="${aiResult.original_language || ""}"`);
 
   const insertPayload: Record<string, unknown> = {
     appointment_id: appointmentId,

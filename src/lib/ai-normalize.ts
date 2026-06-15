@@ -66,11 +66,20 @@ export async function normalizeWithAI(
     };
   }
 
+  console.log("[AI Normalize] AI normalization started");
+  console.log("[AI Normalize] Original values:", JSON.stringify({
+    patient_name: input.patient_name,
+    department: input.department,
+    reason: input.reason,
+    language: input.language,
+    notes: input.notes,
+  }));
+
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: MODEL });
   const prompt = buildPrompt(input);
 
-  console.log("[AI Normalize] Calling Gemini for data normalization...");
+  console.log("[AI Normalize] Calling Gemini API...");
   const startTime = Date.now();
 
   try {
@@ -99,15 +108,19 @@ export async function normalizeWithAI(
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
-    console.log("[AI Normalize] Parsed:", JSON.stringify(parsed));
 
-    return {
+    const normalized = {
       patient_name: String(parsed.patient_name || input.patient_name),
       department: String(parsed.department || input.department),
       reason: parsed.reason !== undefined ? String(parsed.reason) : input.reason || null,
       notes: parsed.notes !== undefined ? String(parsed.notes) : input.notes || null,
       original_language: String(parsed.original_language || input.language || null),
     };
+
+    console.log("[AI Normalize] AI normalization completed");
+    console.log("[AI Normalize] Normalized values:", JSON.stringify(normalized));
+
+    return normalized;
   } catch (error) {
     const elapsed = Date.now() - startTime;
     console.error(`[AI Normalize] Gemini failed after ${elapsed}ms, falling back to raw values`);
