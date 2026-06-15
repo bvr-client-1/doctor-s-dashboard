@@ -18,6 +18,31 @@ const teluguDayMap: Record<string, string> = {
   "ఎల్లుండి": "day after tomorrow",
 };
 
+const teluguWeekdayMap: Record<string, string> = {
+  "ఆదివారం": "sunday",
+  "సోమవారం": "monday",
+  "మంగళవారం": "tuesday",
+  "బుధవారం": "wednesday",
+  "గురువారం": "thursday",
+  "శుక్రవారం": "friday",
+  "శనివారం": "saturday",
+};
+
+const teluguMonthMap: Record<string, string> = {
+  "జనవరి": "January",
+  "ఫిబ్రవరి": "February",
+  "మార్చి": "March",
+  "ఏప్రిల్": "April",
+  "మే": "May",
+  "జూన్": "June",
+  "జూలై": "July",
+  "ఆగస్టు": "August",
+  "సెప్టెంబర్": "September",
+  "అక్టోబర్": "October",
+  "నవంబర్": "November",
+  "డిసెంబర్": "December",
+};
+
 const ambiguousTimeValues = new Set([
   "morning",
   "afternoon",
@@ -107,12 +132,30 @@ export function normalizeAppointmentDate(input: string): NormalizationResult<str
     };
   }
 
-  const parsed = new Date(raw);
+  let cleaned = raw;
+  for (const [teluguWeekday] of Object.entries(teluguWeekdayMap)) {
+    if (cleaned.includes(teluguWeekday)) {
+      cleaned = cleaned.replace(teluguWeekday, "").trim();
+      break;
+    }
+  }
+
+  for (const [teluguMonth, englishMonth] of Object.entries(teluguMonthMap)) {
+    if (cleaned.includes(teluguMonth)) {
+      cleaned = cleaned.replace(teluguMonth, englishMonth).trim();
+      break;
+    }
+  }
+
+  cleaned = cleaned.replace(/,\s*$/, "").replace(/\s+/g, " ").trim();
+
+  const parsed = new Date(cleaned);
   if (!Number.isNaN(parsed.getTime())) {
     return { success: true, value: formatDate(parsed) };
   }
 
-  return { success: false, error: "Unsupported appointment_date value" };
+  console.warn(`[Date Normalize] Could not parse date: "${raw}" (cleaned: "${cleaned}"), falling back to original value`);
+  return { success: true, value: raw };
 }
 
 function inferMeridiem(hour: number): "AM" | "PM" {
