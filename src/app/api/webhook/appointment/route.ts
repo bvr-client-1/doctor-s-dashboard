@@ -145,18 +145,18 @@ export async function POST(request: NextRequest) {
   const aiElapsed = Date.now() - aiStartTime;
   console.log(`[Webhook:${requestId}] AI normalization completed in ${aiElapsed}ms`);
   console.log(`[Webhook:${requestId}] Before AI: name="${data.patient_name.trim()}", dept="${data.department}", reason="${data.reason || ""}", lang="${data.language || ""}"`);
-  console.log(`[Webhook:${requestId}] After AI:  name="${aiResult.patient_name}", dept="${aiResult.department}", reason="${aiResult.reason || ""}", lang="${aiResult.original_language || ""}"`);
+  console.log(`[Webhook:${requestId}] After AI:  name="${aiResult.patient_name_english}", dept="${aiResult.department_normalized}", reason="${aiResult.reason_english || ""}", lang="${aiResult.original_language || ""}"`);
 
   const insertPayload: Record<string, unknown> = {
     appointment_id: appointmentId,
-    patient_name: aiResult.patient_name,
+    patient_name: aiResult.patient_name_english,
     phone: normalizedPhone,
-    department: aiResult.department,
-    reason: aiResult.reason,
+    department: aiResult.department_normalized,
+    reason: aiResult.reason_english,
     appointment_date: normalizedDateResult.value,
     appointment_time: normalizedTimeResult.value,
     language: aiResult.original_language,
-    notes: aiResult.notes,
+    notes: aiResult.notes_english,
   };
 
   console.log(`[Webhook:${requestId}] Inserting into Supabase...`);
@@ -183,8 +183,8 @@ export async function POST(request: NextRequest) {
 
   sendAppointmentWhatsApp({
     to: normalizedPhone,
-    patient_name: aiResult.patient_name,
-    department: aiResult.department,
+    patient_name: aiResult.patient_name_english,
+    department: aiResult.department_normalized,
     appointment_date: normalizedDateResult.value,
     appointment_time: normalizedTimeResult.value,
   }).catch((err) => {
