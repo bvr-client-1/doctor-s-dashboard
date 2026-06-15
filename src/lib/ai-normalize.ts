@@ -35,7 +35,7 @@ Input:
 - language spoken: ${input.language || "unknown"}
 
 Rules:
-1. Transliterate the patient_name to English (e.g., కీర్తన్ -> Keerthan, राहुल -> Rahul, పృథ్వి -> Pruthvi, కార్తీక్ -> Karthik). Keep original script in parentheses if the name was non-English: "Keerthan (కీర్తన్)".
+1. Transliterate the patient_name to English only (e.g., కీర్తన్ -> Keerthan, राहुल -> Rahul, పృథ్వి -> Pruthvi, కార్తీక్ -> Karthik). Return ONLY the English name, no original script, no parentheses.
 2. Normalize department to one of: General Medicine, Ophthalmology, Gynecology, Dermatology, Pediatrics, Cardiology, Orthopedics, ENT. Map synonyms (e.g., "కళ్ళ డాక్టర్" -> Ophthalmology, "గుండె" -> Cardiology).
 3. Convert the reason/symptoms to concise English medical terms (e.g., "జ్వరం" -> "Fever", "తలనొప్పి" -> "Headache", "కడుపునొప్పి" -> "Stomach Pain", "కళ్ళు నొప్పి" -> "Eye pain").
 4. Generate 1-2 concise professional clinical notes summarizing the patient complaint.
