@@ -156,7 +156,6 @@ export async function POST(request: NextRequest) {
     appointment_date: normalizedDateResult.value,
     appointment_time: normalizedTimeResult.value,
     language: aiResult.original_language,
-    original_language: aiResult.original_language,
     notes: aiResult.notes,
   };
 
