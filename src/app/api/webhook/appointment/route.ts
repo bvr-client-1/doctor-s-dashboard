@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { webhookAppointmentSchema } from "@/lib/validations";
+import {
+  normalizeAppointmentDate,
+  normalizeAppointmentTime,
+} from "@/lib/appointment-normalization";
 import { sendAppointmentWhatsApp } from "@/lib/whatsapp";
+
+async function getNextAppointmentId() {
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("appointment_id")
+    .not("appointment_id", "is", null)
+    .order("appointment_id", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    throw new Error(`Failed to generate appointment_id: ${error.message}`);
+  }
+
+  const latestValue = data?.[0]?.appointment_id;
+  const latestNumber = typeof latestValue === "string"
+    ? Number.parseInt(latestValue.replace(/^CP-/, ""), 10)
+    : 1000;
+
+  return `CP-${Number.isNaN(latestNumber) ? 1001 : latestNumber + 1}`;
+}
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -46,6 +70,33 @@ export async function POST(request: NextRequest) {
   console.log(`[Webhook:${requestId}] Validation passed`);
 
   const data = validation.data;
+  const normalizedDateResult = normalizeAppointmentDate(data.appointment_date);
+  if (!normalizedDateResult.success) {
+    console.error(`[Webhook:${requestId}] Date normalization failed: ${normalizedDateResult.error}`);
+    return NextResponse.json(
+      {
+        success: false,
+        error: normalizedDateResult.error,
+        field: "appointment_date",
+        request_id: requestId,
+      },
+      { status: 400 }
+    );
+  }
+
+  const normalizedTimeResult = normalizeAppointmentTime(data.appointment_time);
+  if (!normalizedTimeResult.success) {
+    console.error(`[Webhook:${requestId}] Time normalization failed: ${normalizedTimeResult.error}`);
+    return NextResponse.json(
+      {
+        success: false,
+        error: normalizedTimeResult.error,
+        field: "appointment_time",
+        request_id: requestId,
+      },
+      { status: 400 }
+    );
+  }
 
   const phoneDigits = data.phone.replace(/\D/g, "");
   let normalizedPhone = data.phone;
@@ -57,13 +108,34 @@ export async function POST(request: NextRequest) {
     normalizedPhone = `+${phoneDigits}`;
   }
 
+  let appointmentId: string;
+  try {
+    appointmentId = await getNextAppointmentId();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to generate appointment_id";
+    console.error(`[Webhook:${requestId}] ${message}`);
+    return NextResponse.json(
+      {
+        success: false,
+        error: message,
+        request_id: requestId,
+      },
+      { status: 500 }
+    );
+  }
+
+  console.log(`[Webhook:${requestId}] Normalized appointment_date: ${normalizedDateResult.value}`);
+  console.log(`[Webhook:${requestId}] Normalized appointment_time: ${normalizedTimeResult.value}`);
+  console.log(`[Webhook:${requestId}] Generated appointment_id: ${appointmentId}`);
+
   const insertPayload: Record<string, unknown> = {
+    appointment_id: appointmentId,
     patient_name: data.patient_name.trim(),
     phone: normalizedPhone,
     department: data.department,
     reason: data.reason || null,
-    appointment_date: data.appointment_date || null,
-    appointment_time: data.appointment_time || null,
+    appointment_date: normalizedDateResult.value,
+    appointment_time: normalizedTimeResult.value,
     language: data.language || null,
     notes: data.notes || null,
   };
@@ -94,8 +166,9 @@ export async function POST(request: NextRequest) {
     to: normalizedPhone,
     patient_name: data.patient_name.trim(),
     department: data.department,
-    appointment_date: data.appointment_date || null,
-    appointment_time: data.appointment_time || null,
+    appointment_date: normalizedDateResult.value,
+    appointment_time: normalizedTimeResult.value,
+    language: data.language || null,
   }).catch((err) => {
     console.error(`[Webhook:${requestId}] WhatsApp fire-and-forget error:`, err);
   });
@@ -103,7 +176,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     {
       success: true,
-      appointment_id: result.id,
+      appointment_id: appointmentId,
+      record_id: result.id,
       request_id: requestId,
     },
     { status: 200 }

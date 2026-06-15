@@ -1,0 +1,195 @@
+type NormalizationResult<T> =
+  | { success: true; value: T }
+  | { success: false; error: string };
+
+const weekdayMap: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+const teluguDayMap: Record<string, string> = {
+  "ఈరోజు": "today",
+  "రేపు": "tomorrow",
+  "ఎల్లుండి": "day after tomorrow",
+};
+
+const ambiguousTimeValues = new Set([
+  "morning",
+  "afternoon",
+  "evening",
+  "night",
+  "ఉదయం",
+  "మధ్యాహ్నం",
+  "సాయంత్రం",
+  "రాత్రి",
+]);
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function nextWeekday(baseDate: Date, targetWeekday: number, forceNextWeek: boolean): Date {
+  const currentWeekday = baseDate.getDay();
+  let diff = (targetWeekday - currentWeekday + 7) % 7;
+  if (diff === 0 && forceNextWeek) {
+    diff = 7;
+  }
+  return addDays(baseDate, diff);
+}
+
+export function normalizeAppointmentDate(input: string): NormalizationResult<string | null> {
+  const raw = input.trim();
+  if (!raw) {
+    return { success: true, value: null };
+  }
+
+  const lower = raw.toLowerCase();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const parsed = new Date(`${raw}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      return { success: false, error: "Invalid appointment_date" };
+    }
+    return { success: true, value: raw };
+  }
+
+  if (raw in teluguDayMap) {
+    if (raw === "ఈరోజు") {
+      return { success: true, value: formatDate(today) };
+    }
+    if (raw === "రేపు") {
+      return { success: true, value: formatDate(addDays(today, 1)) };
+    }
+    if (raw === "ఎల్లుండి") {
+      return { success: true, value: formatDate(addDays(today, 2)) };
+    }
+  }
+
+  if (lower === "today") {
+    return { success: true, value: formatDate(today) };
+  }
+  if (lower === "tomorrow") {
+    return { success: true, value: formatDate(addDays(today, 1)) };
+  }
+
+  if (lower in weekdayMap) {
+    return { success: true, value: formatDate(nextWeekday(today, weekdayMap[lower], false)) };
+  }
+
+  const nextWeekdayMatch = lower.match(/^next\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)$/);
+  if (nextWeekdayMatch) {
+    return {
+      success: true,
+      value: formatDate(nextWeekday(today, weekdayMap[nextWeekdayMatch[1]], true)),
+    };
+  }
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return { success: true, value: formatDate(parsed) };
+  }
+
+  return { success: false, error: "Unsupported appointment_date value" };
+}
+
+function inferMeridiem(hour: number): "AM" | "PM" {
+  if (hour >= 8 && hour <= 11) {
+    return "AM";
+  }
+  return "PM";
+}
+
+export function normalizeAppointmentTime(input: string): NormalizationResult<string | null> {
+  const raw = input.trim();
+  if (!raw) {
+    return { success: true, value: null };
+  }
+
+  const lower = raw.toLowerCase();
+  if (ambiguousTimeValues.has(lower) || ambiguousTimeValues.has(raw)) {
+    return { success: false, error: "Exact appointment_time is required instead of a broad time like morning" };
+  }
+
+  const meridiemMatch = lower.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+  if (meridiemMatch) {
+    const hour = Number(meridiemMatch[1]);
+    const minute = Number(meridiemMatch[2] ?? "0");
+    if (hour < 1 || hour > 12 || minute < 0 || minute > 59) {
+      return { success: false, error: "Invalid appointment_time" };
+    }
+    return {
+      success: true,
+      value: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${meridiemMatch[3].toUpperCase()}`,
+    };
+  }
+
+  const twentyFourHourMatch = lower.match(/^(\d{1,2}):(\d{2})$/);
+  if (twentyFourHourMatch) {
+    const hour = Number(twentyFourHourMatch[1]);
+    const minute = Number(twentyFourHourMatch[2]);
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return { success: false, error: "Invalid appointment_time" };
+    }
+
+    let meridiem: "AM" | "PM";
+    let twelveHour: number;
+
+    if (hour === 0) {
+      twelveHour = 12;
+      meridiem = "AM";
+    } else if (hour < 12) {
+      twelveHour = hour;
+      meridiem = inferMeridiem(hour);
+    } else if (hour === 12) {
+      twelveHour = 12;
+      meridiem = "PM";
+    } else {
+      twelveHour = hour - 12;
+      meridiem = "PM";
+    }
+
+    return {
+      success: true,
+      value: `${String(twelveHour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${meridiem}`,
+    };
+  }
+
+  const hourOnlyMatch = lower.match(/^(\d{1,2})$/);
+  if (hourOnlyMatch) {
+    const hour = Number(hourOnlyMatch[1]);
+    if (hour < 1 || hour > 12) {
+      return { success: false, error: "Invalid appointment_time" };
+    }
+    return {
+      success: true,
+      value: `${String(hour).padStart(2, "0")}:00 ${inferMeridiem(hour)}`,
+    };
+  }
+
+  return { success: false, error: "Unsupported appointment_time value" };
+}
+
+export function isTeluguLanguage(input: string | null | undefined): boolean {
+  if (!input) {
+    return false;
+  }
+
+  const lower = input.trim().toLowerCase();
+  return lower === "telugu" || input.includes("తెలుగు");
+}

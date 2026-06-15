@@ -7,6 +7,7 @@ export interface SendWhatsAppOptions {
   department: string;
   appointment_date: string | null;
   appointment_time: string | null;
+  language?: string | null;
 }
 
 export async function sendAppointmentWhatsApp(options: SendWhatsAppOptions): Promise<boolean> {
@@ -15,7 +16,7 @@ export async function sendAppointmentWhatsApp(options: SendWhatsAppOptions): Pro
     return false;
   }
 
-  const { to, patient_name, department, appointment_date, appointment_time } = options;
+  const { to, patient_name, department, appointment_date, appointment_time, language } = options;
 
   const phoneDigits = to.replace(/\D/g, "");
   const toNumber = phoneDigits.startsWith("91") && phoneDigits.length === 12
@@ -26,24 +27,41 @@ export async function sendAppointmentWhatsApp(options: SendWhatsAppOptions): Pro
         ? `91${phoneDigits}`
         : phoneDigits;
 
-  const body = [
-    `Hello ${patient_name},`,
-    "",
-    "Your appointment request has been received.",
-    "",
-    `Department: ${department}`,
-    `Date: ${appointment_date || "Not specified"}`,
-    `Time: ${appointment_time || "Not specified"}`,
-    "",
-    "Our team will contact you shortly.",
-    "",
-    "Thank you.",
-    "CarePoint Medical Center",
-  ].join("\n");
+  const isTelugu = language?.trim().toLowerCase() === "telugu" || language?.includes("తెలుగు");
+  const body = isTelugu
+    ? [
+        `హలో ${patient_name},`,
+        "",
+        "మీ అపాయింట్మెంట్ అభ్యర్థనను స్వీకరించాము.",
+        "",
+        `విభాగం: ${department}`,
+        `తేదీ: ${appointment_date || "తెలియదు"}`,
+        `సమయం: ${appointment_time || "తెలియదు"}`,
+        "",
+        "మా బృందం త్వరలో మిమ్మల్ని సంప్రదిస్తుంది.",
+        "",
+        "ధన్యవాదాలు,",
+        "CarePoint Medical Center",
+      ].join("\n")
+    : [
+        `Hello ${patient_name},`,
+        "",
+        "Your appointment request has been received.",
+        "",
+        `Department: ${department}`,
+        `Date: ${appointment_date || "Not specified"}`,
+        `Time: ${appointment_time || "Not specified"}`,
+        "",
+        "Our team will contact you shortly.",
+        "",
+        "Thank you,",
+        "CarePoint Medical Center",
+      ].join("\n");
 
   const url = `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`;
 
-  console.log(`[WhatsApp] Sending message to ${toNumber}...`);
+  console.log("[WhatsApp] Sending message...");
+  console.log(`[WhatsApp] To: ${toNumber}`);
   console.log(`[WhatsApp] URL: ${url}`);
   console.log(`[WhatsApp] Body preview: ${body.slice(0, 80)}...`);
 
@@ -70,12 +88,14 @@ export async function sendAppointmentWhatsApp(options: SendWhatsAppOptions): Pro
     console.log(`[WhatsApp] Response:`, JSON.stringify(responseData));
 
     if (!response.ok) {
-      console.error(`[WhatsApp] API error: ${response.status}`, JSON.stringify(responseData));
+      console.error(`[WhatsApp] API error: ${response.status}`);
+      console.error("[WhatsApp] Full Meta error response:", JSON.stringify(responseData, null, 2));
       return false;
     }
 
     const messageId = responseData.messages?.[0]?.id;
-    console.log(`[WhatsApp] Message sent successfully. ID: ${messageId}`);
+    console.log("[WhatsApp] Message sent successfully");
+    console.log(`[WhatsApp] Message ID: ${messageId}`);
     return true;
   } catch (error) {
     if (error instanceof Error) {
