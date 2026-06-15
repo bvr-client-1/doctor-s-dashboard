@@ -29,6 +29,13 @@ const ambiguousTimeValues = new Set([
   "రాత్రి",
 ]);
 
+const teluguPeriodMeridiemMap: Record<string, "AM" | "PM"> = {
+  "ఉదయం": "AM",
+  "మధ్యాహ్నం": "PM",
+  "సాయంత్రం": "PM",
+  "రాత్రి": "PM",
+};
+
 function formatDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -122,6 +129,19 @@ export function normalizeAppointmentTime(input: string): NormalizationResult<str
   }
 
   const lower = raw.toLowerCase();
+  const teluguTimeMatch = raw.match(/^(ఉదయం|మధ్యాహ్నం|సాయంత్రం|రాత్రి)\s*(\d{1,2})(?::(\d{2}))?\s*గంటలకు$/);
+  if (teluguTimeMatch) {
+    const hour = Number(teluguTimeMatch[2]);
+    const minute = Number(teluguTimeMatch[3] ?? "0");
+    if (hour < 1 || hour > 12 || minute < 0 || minute > 59) {
+      return { success: false, error: "Invalid appointment_time" };
+    }
+    return {
+      success: true,
+      value: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${teluguPeriodMeridiemMap[teluguTimeMatch[1]]}`,
+    };
+  }
+
   if (ambiguousTimeValues.has(lower) || ambiguousTimeValues.has(raw)) {
     return { success: false, error: "Exact appointment_time is required instead of a broad time like morning" };
   }
