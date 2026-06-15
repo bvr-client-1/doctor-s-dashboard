@@ -7,7 +7,6 @@ export interface SendWhatsAppOptions {
   department: string;
   appointment_date: string | null;
   appointment_time: string | null;
-  language?: string | null;
 }
 
 export async function sendAppointmentWhatsApp(options: SendWhatsAppOptions): Promise<boolean> {
@@ -16,7 +15,7 @@ export async function sendAppointmentWhatsApp(options: SendWhatsAppOptions): Pro
     return false;
   }
 
-  const { to, patient_name, department, appointment_date, appointment_time, language } = options;
+  const { to, patient_name, department, appointment_date, appointment_time } = options;
 
   const phoneDigits = to.replace(/\D/g, "");
   const toNumber = phoneDigits.startsWith("91") && phoneDigits.length === 12
@@ -27,36 +26,20 @@ export async function sendAppointmentWhatsApp(options: SendWhatsAppOptions): Pro
         ? `91${phoneDigits}`
         : phoneDigits;
 
-  const isTelugu = language?.trim().toLowerCase() === "telugu" || language?.includes("తెలుగు");
-  const body = isTelugu
-    ? [
-        `హలో ${patient_name},`,
-        "",
-        "మీ అపాయింట్మెంట్ అభ్యర్థనను స్వీకరించాము.",
-        "",
-        `విభాగం: ${department}`,
-        `తేదీ: ${appointment_date || "తెలియదు"}`,
-        `సమయం: ${appointment_time || "తెలియదు"}`,
-        "",
-        "మా బృందం త్వరలో మిమ్మల్ని సంప్రదిస్తుంది.",
-        "",
-        "ధన్యవాదాలు,",
-        "CarePoint Medical Center",
-      ].join("\n")
-    : [
-        `Hello ${patient_name},`,
-        "",
-        "Your appointment request has been received.",
-        "",
-        `Department: ${department}`,
-        `Date: ${appointment_date || "Not specified"}`,
-        `Time: ${appointment_time || "Not specified"}`,
-        "",
-        "Our team will contact you shortly.",
-        "",
-        "Thank you,",
-        "CarePoint Medical Center",
-      ].join("\n");
+  const body = [
+    `Hello ${patient_name},`,
+    "",
+    "Your appointment request has been received.",
+    "",
+    `Department: ${department}`,
+    `Date: ${appointment_date || "Not specified"}`,
+    `Time: ${appointment_time || "Not specified"}`,
+    "",
+    "Our team will contact you shortly.",
+    "",
+    "Thank you,",
+    "CarePoint Medical Center",
+  ].join("\n");
 
   const url = `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`;
 

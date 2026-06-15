@@ -5,6 +5,7 @@ import {
   normalizeAppointmentDate,
   normalizeAppointmentTime,
 } from "@/lib/appointment-normalization";
+import { normalizeWithAI } from "@/lib/ai-normalize";
 import { sendAppointmentWhatsApp } from "@/lib/whatsapp";
 
 async function getNextAppointmentId() {
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
   console.log(`[Webhook:${requestId}] Validation passed`);
 
   const data = validation.data;
+
   const normalizedDateResult = normalizeAppointmentDate(data.appointment_date);
   if (!normalizedDateResult.success) {
     console.error(`[Webhook:${requestId}] Date normalization failed: ${normalizedDateResult.error}`);
@@ -128,8 +130,8 @@ export async function POST(request: NextRequest) {
   console.log(`[Webhook:${requestId}] Normalized appointment_time: ${normalizedTimeResult.value}`);
   console.log(`[Webhook:${requestId}] Generated appointment_id: ${appointmentId}`);
 
-  const insertPayload: Record<string, unknown> = {
-    appointment_id: appointmentId,
+  console.log(`[Webhook:${requestId}] Calling AI normalization...`);
+  const aiResult = await normalizeWithAI({
     patient_name: data.patient_name.trim(),
     phone: normalizedPhone,
     department: data.department,
@@ -138,6 +140,20 @@ export async function POST(request: NextRequest) {
     appointment_time: normalizedTimeResult.value,
     language: data.language || null,
     notes: data.notes || null,
+  });
+  console.log(`[Webhook:${requestId}] AI normalized:`, JSON.stringify(aiResult));
+
+  const insertPayload: Record<string, unknown> = {
+    appointment_id: appointmentId,
+    patient_name: aiResult.patient_name,
+    phone: normalizedPhone,
+    department: aiResult.department,
+    reason: aiResult.reason,
+    appointment_date: normalizedDateResult.value,
+    appointment_time: normalizedTimeResult.value,
+    language: aiResult.original_language,
+    original_language: aiResult.original_language,
+    notes: aiResult.notes,
   };
 
   console.log(`[Webhook:${requestId}] Inserting into Supabase...`);
@@ -164,11 +180,10 @@ export async function POST(request: NextRequest) {
 
   sendAppointmentWhatsApp({
     to: normalizedPhone,
-    patient_name: data.patient_name.trim(),
-    department: data.department,
+    patient_name: aiResult.patient_name,
+    department: aiResult.department,
     appointment_date: normalizedDateResult.value,
     appointment_time: normalizedTimeResult.value,
-    language: data.language || null,
   }).catch((err) => {
     console.error(`[Webhook:${requestId}] WhatsApp fire-and-forget error:`, err);
   });
