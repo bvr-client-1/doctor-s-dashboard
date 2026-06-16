@@ -38,9 +38,10 @@ Rules:
 1. Transliterate the patient_name to English only (e.g., కీర్తన్ -> Keerthan, राहुल -> Rahul, పృథ్వి -> Pruthvi, కార్తీక్ -> Karthik). Return ONLY the English name, no original script, no parentheses.
 2. Normalize department to one of: General Medicine, Ophthalmology, Gynecology, Dermatology, Pediatrics, Cardiology, Orthopedics, ENT. Map synonyms (e.g., "కళ్ళ డాక్టర్" -> Ophthalmology, "గుండె" -> Cardiology).
 3. Convert the reason/symptoms to concise English medical terms (e.g., "జ్వరం" -> "Fever", "తలనొప్పి" -> "Headache", "కడుపునొప్పి" -> "Stomach Pain", "కళ్ళు నొప్పి" -> "Eye pain").
-4. Generate 1-2 concise professional clinical notes summarizing the patient complaint.
-5. Detect the original language from the input (e.g., "Telugu", "Hindi", "English").
-6. Return ONLY valid JSON, no markdown, no explanation.
+4. If notes is empty or "None", return notes_english as an empty string "". Do NOT generate clinical notes.
+5. If notes has content, translate it literally to professional English. Do NOT add evaluation, treatment, diagnosis, or any medical information not explicitly stated by the patient.
+6. Detect the original language from the input (e.g., "Telugu", "Hindi", "English").
+7. Return ONLY valid JSON, no markdown, no explanation.
 
 Output JSON:
 {
