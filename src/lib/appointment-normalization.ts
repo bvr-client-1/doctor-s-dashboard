@@ -18,6 +18,12 @@ const teluguDayMap: Record<string, string> = {
   "ఎల్లుండి": "day after tomorrow",
 };
 
+const hindiDayMap: Record<string, string> = {
+  "आज": "today",
+  "कल": "tomorrow",
+  "परसों": "day after tomorrow",
+};
+
 const teluguWeekdayMap: Record<string, string> = {
   "ఆదివారం": "sunday",
   "సోమవారం": "monday",
@@ -26,6 +32,16 @@ const teluguWeekdayMap: Record<string, string> = {
   "గురువారం": "thursday",
   "శుక్రవారం": "friday",
   "శనివారం": "saturday",
+};
+
+const hindiWeekdayMap: Record<string, string> = {
+  "रविवार": "sunday",
+  "सोमवार": "monday",
+  "मंगलवार": "tuesday",
+  "बुधवार": "wednesday",
+  "गुरुवार": "thursday",
+  "शुक्रवार": "friday",
+  "शनिवार": "saturday",
 };
 
 const teluguMonthMap: Record<string, string> = {
@@ -41,6 +57,21 @@ const teluguMonthMap: Record<string, string> = {
   "అక్టోబర్": "October",
   "నవంబర్": "November",
   "డిసెంబర్": "December",
+};
+
+const hindiMonthMap: Record<string, string> = {
+  "जनवरी": "January",
+  "फरवरी": "February",
+  "मार्च": "March",
+  "अप्रैल": "April",
+  "मई": "May",
+  "जून": "June",
+  "जुलाई": "July",
+  "अगस्त": "August",
+  "सितंबर": "September",
+  "अक्टूबर": "October",
+  "नवंबर": "November",
+  "दिसंबर": "December",
 };
 
 const ambiguousTimeValues = new Set([
@@ -113,6 +144,18 @@ export function normalizeAppointmentDate(input: string): NormalizationResult<str
     }
   }
 
+  if (raw in hindiDayMap) {
+    if (raw === "आज") {
+      return { success: true, value: formatDate(today) };
+    }
+    if (raw === "कल") {
+      return { success: true, value: formatDate(addDays(today, 1)) };
+    }
+    if (raw === "परसों") {
+      return { success: true, value: formatDate(addDays(today, 2)) };
+    }
+  }
+
   if (lower === "today") {
     return { success: true, value: formatDate(today) };
   }
@@ -122,6 +165,11 @@ export function normalizeAppointmentDate(input: string): NormalizationResult<str
 
   if (lower in weekdayMap) {
     return { success: true, value: formatDate(nextWeekday(today, weekdayMap[lower], false)) };
+  }
+
+  const hindiWeekday = hindiWeekdayMap[raw];
+  if (hindiWeekday && hindiWeekday in weekdayMap) {
+    return { success: true, value: formatDate(nextWeekday(today, weekdayMap[hindiWeekday], false)) };
   }
 
   const nextWeekdayMatch = lower.match(/^next\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)$/);
@@ -140,9 +188,23 @@ export function normalizeAppointmentDate(input: string): NormalizationResult<str
     }
   }
 
+  for (const [hindiWeekday] of Object.entries(hindiWeekdayMap)) {
+    if (cleaned.includes(hindiWeekday)) {
+      cleaned = cleaned.replace(hindiWeekday, "").trim();
+      break;
+    }
+  }
+
   for (const [teluguMonth, englishMonth] of Object.entries(teluguMonthMap)) {
     if (cleaned.includes(teluguMonth)) {
       cleaned = cleaned.replace(teluguMonth, englishMonth).trim();
+      break;
+    }
+  }
+
+  for (const [hindiMonth, englishMonth] of Object.entries(hindiMonthMap)) {
+    if (cleaned.includes(hindiMonth)) {
+      cleaned = cleaned.replace(hindiMonth, englishMonth).trim();
       break;
     }
   }
