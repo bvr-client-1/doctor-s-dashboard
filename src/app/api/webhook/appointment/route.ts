@@ -28,6 +28,31 @@ async function getNextAppointmentId() {
   return `CP-${Number.isNaN(latestNumber) ? 1001 : latestNumber + 1}`;
 }
 
+async function findDuplicateAppointment(
+  phone: string,
+  appointmentDate: string | null,
+  appointmentTime: string | null
+) {
+  if (!appointmentDate || !appointmentTime) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("appointment_id")
+    .eq("phone", phone)
+    .eq("appointment_date", appointmentDate)
+    .eq("appointment_time", appointmentTime)
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data.appointment_id as string;
+}
+
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID().slice(0, 8);
   console.log(`[Webhook:${requestId}] POST /api/webhook/appointment`);
@@ -110,6 +135,28 @@ export async function POST(request: NextRequest) {
     normalizedPhone = `+${phoneDigits}`;
   }
 
+  console.log(`[Webhook:${requestId}] Normalized appointment_date: ${normalizedDateResult.value}`);
+  console.log(`[Webhook:${requestId}] Normalized appointment_time: ${normalizedTimeResult.value}`);
+
+  const existingAppointmentId = await findDuplicateAppointment(
+    normalizedPhone,
+    normalizedDateResult.value,
+    normalizedTimeResult.value
+  );
+
+  if (existingAppointmentId) {
+    console.log(`[Duplicate] Existing appointment found: ${existingAppointmentId}`);
+    return NextResponse.json(
+      {
+        success: true,
+        duplicate: true,
+        appointment_id: existingAppointmentId,
+        request_id: requestId,
+      },
+      { status: 200 }
+    );
+  }
+
   let appointmentId: string;
   try {
     appointmentId = await getNextAppointmentId();
@@ -126,8 +173,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log(`[Webhook:${requestId}] Normalized appointment_date: ${normalizedDateResult.value}`);
-  console.log(`[Webhook:${requestId}] Normalized appointment_time: ${normalizedTimeResult.value}`);
   console.log(`[Webhook:${requestId}] Generated appointment_id: ${appointmentId}`);
 
   console.log(`[Webhook:${requestId}] Starting AI normalization...`);
@@ -147,6 +192,17 @@ export async function POST(request: NextRequest) {
   console.log(`[Webhook:${requestId}] Before AI: name="${data.patient_name.trim()}", dept="${data.department}", reason="${data.reason || ""}", lang="${data.language || ""}"`);
   console.log(`[Webhook:${requestId}] After AI:  name="${aiResult.patient_name_english}", dept="${aiResult.department_normalized}", reason="${aiResult.reason_english || ""}", lang="${aiResult.original_language || ""}"`);
 
+  const rawPayload: Record<string, unknown> = {
+    patient_name: data.patient_name,
+    phone: data.phone,
+    department: data.department,
+    reason: data.reason || null,
+    appointment_date: data.appointment_date || null,
+    appointment_time: data.appointment_time || null,
+    language: data.language || null,
+    notes: data.notes || null,
+  };
+
   const insertPayload: Record<string, unknown> = {
     appointment_id: appointmentId,
     patient_name: aiResult.patient_name_english,
@@ -157,6 +213,7 @@ export async function POST(request: NextRequest) {
     appointment_time: normalizedTimeResult.value,
     language: aiResult.original_language,
     notes: aiResult.notes_english,
+    raw_payload: rawPayload,
   };
 
   console.log(`[Webhook:${requestId}] Inserting into Supabase...`);
